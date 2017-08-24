@@ -47,6 +47,8 @@ public class PrescanGeneratorMojo extends AbstractMojo {
 						writer.write(item + System.lineSeparator() );
 					}
 					writer.flush();
+				} else {
+					getLog().info( "No interesting web resources found?");
 				}
 			}
 		} catch (Exception ex) {
