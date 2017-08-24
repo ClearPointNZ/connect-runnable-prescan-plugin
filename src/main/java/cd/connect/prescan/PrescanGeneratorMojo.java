@@ -10,8 +10,8 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectHelper;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,81 +27,68 @@ public class PrescanGeneratorMojo extends AbstractMojo {
 	@Parameter(defaultValue = "${project}", readonly = true)
 	MavenProject project;
 
-	@Parameter(defaultValue = "${project.build.directory}/generated-sources/dto/src/test/java")
-	File javaOutFolder;
+	@Parameter(defaultValue = "${project.targetDir}")
+	File targetDir;
 
-	@Parameter(defaultValue = "${project.directory}")
-	File projectDir;
+
 
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
+		List<String> interesting;
 
 		try {
 			if (project != null) {
-				project.addCompileSourceRoot(javaOutFolder.getAbsolutePath());
+				ClasspathScanner scanner = new ClasspathScanner();
+				ClassLoader loader = getClass().getClassLoader();
+				interesting = scan( scanner, loader );
+				if( !interesting.isEmpty() ){
+					FileWriter writer = new FileWriter("prescan" );
+					for( String item : interesting ) {
+						writer.write(item + System.lineSeparator() );
+					}
+					writer.flush();
+				}
 			}
-		} catch (Exception e) {
-			throw new MojoExecutionException(e.getMessage(), e);
+		} catch (Exception ex) {
+			throw new MojoExecutionException(ex.getMessage(), ex);
 		}
 	}
 
-	public void prescan( ClasspathScanner scanner, ClassLoader classLoader ) throws Exception {
+	public List<String> scan( ClasspathScanner scanner, ClassLoader classLoader ) throws Exception {
 
+		List<String> found = new ArrayList<>();
+
+		List<ResourceScanListener.ScanResource> webxml = new ArrayList<>();
+		List<ResourceScanListener.ScanResource> fragments = new ArrayList<>();
 		List<ResourceScanListener.ScanResource> resources = new ArrayList<>();
-
-
-
 
 		ResourceScanListener listener = new ResourceScanListener() {
 			@Override
-			public List<ScanResource> resource( List<ScanResource> scanResources ) throws Exception {
-				List<ResourceScanListener.ScanResource> interesting = new ArrayList<>();
-				for ( ScanResource scanResource : scanResources ) {
-					if( scanResource.resourceName.endsWith( "WEB-INF/web.xml" ) || "META-INF/web-fragment.xml".equals( scanResource.resourceName ) ) {
-						resources.add( scanResource );
-					} else if ( prefixWebResource( scanResource ) != null ) {
-						interesting.add( scanResource );
+			public List<ScanResource> resource(List<ScanResource> scanResources) throws Exception {
+				for (ScanResource scanResource : scanResources) {
+					if (scanResource.resourceName.endsWith("WEB-INF/web.xml")) {
+						found.add( "webxml=" + mapScanResource( scanResource ) );
+					} else if ("META-INF/web-fragment.xml".equals(scanResource.resourceName)) {
+						found.add( "fragment=" + mapScanResource( scanResource ) );
+					} else if ( scanResource.resourceName.startsWith( "META-INF/resources" ) ) {
+						if( scanResource.file != null && scanResource.file.isDirectory() ) {
+							found.add( "resource=" + mapScanResource( scanResource ) );
+						}
 					}
 				}
-				return interesting;
+				return null; // nothing was interesting :-)
 			}
 
 			@Override
-			public void deliver( ScanResource scanResource, InputStream inputStream ) {
-				// this should only ever happen in production mode
-//		String resourceName = scanResource.resourceName;
-//		String stripPrefix = prefixWebResource(scanResource);
-
-//
-//		if (stripPrefix.length() > 0) {
-//			resourceName = resourceName.substring(stripPrefix.length());
-//		}
-//
-//		String[] paths = resourceName.split("/");
-//		for (int count = 0; count < paths.length - 1; count++) {
-//			InMemoryResource child = resource.findPath(paths[count]);
-//
-//			if (child == null) {
-//				child = resource.addDirectory(paths[count]);
-//			}
-//
-//			resource = child;
-//		}
-//
-//		if (scanResource.entry.isDirectory()) {
-//			resource.addDirectory(paths[paths.length - 1]);
-//		} else {
-//			resource.addFile(paths[paths.length - 1], stream);
-//		}
-				resources.add( scanResource );
-
+			public void deliver(ScanResource scanResource, InputStream inputStream) {
+				// we don't care about the individual files or sub-folders so don't do anything
 			}
 
 			@Override
-			public InterestAction isInteresting( InterestingResource interestingResource ) {
+			public InterestAction isInteresting(InterestingResource interestingResource) {
 				String url = interestingResource.url.toString();
-				if ( url.contains( "jre" ) || url.contains( "jdk" ) ) {
+				if (url.contains("jre") || url.contains("jdk")) {
 					return InterestAction.NONE;
 				} else {
 					return InterestAction.ONCE;
@@ -109,16 +96,30 @@ public class PrescanGeneratorMojo extends AbstractMojo {
 			}
 
 			@Override
-			public void scanAction( ScanAction action ) {
+			public void scanAction(ScanAction action) {
+				// we don't care about the actions so don't do anything
 			}
 		};
 
-		scanner.registerResourceScanner( listener );
-		scanner.scan( classLoader );
+		scanner.registerResourceScanner(listener);
+		scanner.scan(classLoader);
+		return found;
 	}
 
-	private String prefixWebResource( ResourceScanListener.ScanResource scanResource ) {
-		return scanResource.resourceName.startsWith( "META-INF/resources/" ) ? "META-INF/resources/" : null;
-	}
+	/**
+	 * We need to dereference the path so we don't include the full path. When we are
+	 * running inside mvn, our target path will end in /target so we adjust it so it
+	 * points at /target/classes where all our stuff will be...
+	 *
+	 */
+	private String mapScanResource( ResourceScanListener.ScanResource resource ){
+		String url = resource.getResolvedUrl().toString();
+		String path = targetDir.getPath();
+		// are we in a test?
+		if( !path.endsWith( "classes" ) ) {
+			path = path + "/classes";
+		}
+		return url.replace( path, "" );
 
+	}
 }
