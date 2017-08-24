@@ -15,7 +15,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-@Mojo(name = "generate",
+@Mojo(name = "prescan-plugin",
 	defaultPhase = LifecyclePhase.PROCESS_CLASSES,
 	configurator = "include-project-dependencies",
 	requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
@@ -27,23 +27,22 @@ public class PrescanGeneratorMojo extends AbstractMojo {
 	@Parameter(defaultValue = "${project}", readonly = true)
 	MavenProject project;
 
-	@Parameter(defaultValue = "${project.targetDir}")
-	File targetDir;
-
-
-
+	@Parameter(defaultValue = "${project.build.directory}")
+	File projectBuildDir;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		List<String> interesting;
 
 		try {
-			if (project != null) {
-				ClasspathScanner scanner = new ClasspathScanner();
+			if ( project != null ) {
+				ClasspathScanner scanner = ClasspathScanner.getInstance();
 				ClassLoader loader = getClass().getClassLoader();
 				interesting = scan( scanner, loader );
 				if( !interesting.isEmpty() ){
-					FileWriter writer = new FileWriter("prescan" );
+					// make sure the META-INF folder is there
+					new File( projectBuildPath() + "/META-INF/" ).mkdirs();
+					FileWriter writer = new FileWriter(projectBuildPath() + "/META-INF/prescan" );
 					for( String item : interesting ) {
 						writer.write(item + System.lineSeparator() );
 					}
@@ -56,24 +55,23 @@ public class PrescanGeneratorMojo extends AbstractMojo {
 	}
 
 	public List<String> scan( ClasspathScanner scanner, ClassLoader classLoader ) throws Exception {
-
 		List<String> found = new ArrayList<>();
-
-		List<ResourceScanListener.ScanResource> webxml = new ArrayList<>();
-		List<ResourceScanListener.ScanResource> fragments = new ArrayList<>();
-		List<ResourceScanListener.ScanResource> resources = new ArrayList<>();
 
 		ResourceScanListener listener = new ResourceScanListener() {
 			@Override
-			public List<ScanResource> resource(List<ScanResource> scanResources) throws Exception {
-				for (ScanResource scanResource : scanResources) {
-					if (scanResource.resourceName.endsWith("WEB-INF/web.xml")) {
+			public List<ScanResource> resource( List<ScanResource> scanResources ) throws Exception {
+				for ( ScanResource scanResource : scanResources ) {
+					if ( scanResource.resourceName.endsWith( "WEB-INF/web.xml" ) ) {
 						found.add( "webxml=" + mapScanResource( scanResource ) );
-					} else if ("META-INF/web-fragment.xml".equals(scanResource.resourceName)) {
+					} else if ( "META-INF/web-fragment.xml".equals( scanResource.resourceName ) ) {
 						found.add( "fragment=" + mapScanResource( scanResource ) );
-					} else if ( scanResource.resourceName.startsWith( "META-INF/resources" ) ) {
-						if( scanResource.file != null && scanResource.file.isDirectory() ) {
-							found.add( "resource=" + mapScanResource( scanResource ) );
+					} else if( scanResource.resourceName.startsWith( "META-INF/resources" ) ) {
+						if ( isDirectory( scanResource ) ) {
+							String path = mapScanResource( scanResource );
+							if( !path.endsWith( "/" ) ) {
+								path = path + "/";
+							}
+							found.add( "resource=" + path );
 						}
 					}
 				}
@@ -81,14 +79,14 @@ public class PrescanGeneratorMojo extends AbstractMojo {
 			}
 
 			@Override
-			public void deliver(ScanResource scanResource, InputStream inputStream) {
+			public void deliver( ScanResource scanResource, InputStream inputStream ) {
 				// we don't care about the individual files or sub-folders so don't do anything
 			}
 
 			@Override
-			public InterestAction isInteresting(InterestingResource interestingResource) {
+			public InterestAction isInteresting( InterestingResource interestingResource ) {
 				String url = interestingResource.url.toString();
-				if (url.contains("jre") || url.contains("jdk")) {
+				if( url.contains( "jre" ) || url.contains( "jdk" ) ) {
 					return InterestAction.NONE;
 				} else {
 					return InterestAction.ONCE;
@@ -96,13 +94,13 @@ public class PrescanGeneratorMojo extends AbstractMojo {
 			}
 
 			@Override
-			public void scanAction(ScanAction action) {
+			public void scanAction( ScanAction action ) {
 				// we don't care about the actions so don't do anything
 			}
 		};
 
-		scanner.registerResourceScanner(listener);
-		scanner.scan(classLoader);
+		scanner.registerResourceScanner( listener );
+		scanner.scan( classLoader );
 		return found;
 	}
 
@@ -114,12 +112,21 @@ public class PrescanGeneratorMojo extends AbstractMojo {
 	 */
 	private String mapScanResource( ResourceScanListener.ScanResource resource ){
 		String url = resource.getResolvedUrl().toString();
-		String path = targetDir.getPath();
+		return url.replace( projectBuildPath(), "" );
+
+	}
+
+	private String projectBuildPath() {
+		String path = projectBuildDir.getPath();
 		// are we in a test?
 		if( !path.endsWith( "classes" ) ) {
-			path = path + "/classes";
+			return path + "/classes";
 		}
-		return url.replace( path, "" );
+		return path;
+	}
 
+	private boolean isDirectory(ResourceScanListener.ScanResource scanResource ){
+		return ( scanResource.file != null && scanResource.file.isDirectory() ) ||
+						( scanResource.entry != null && scanResource.entry.isDirectory() );
 	}
 }
