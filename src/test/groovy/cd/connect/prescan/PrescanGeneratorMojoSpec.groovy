@@ -26,7 +26,7 @@ class PrescanGeneratorMojoSpec extends Specification{
 	void "We scan our jars for artifacts"(){
 		given: "we have a scanner and a classloader"
 			ClasspathScanner scanner = ClasspathScanner.getInstance()
-			ClassLoader loader = new URLClassLoader( asURLArray('/jars/binks.jar', '/jars/fragment.jar' ) )
+			ClassLoader loader = new URLClassLoader( asURLArray( [ '/jars/binks.jar', '/jars/fragment.jar' ] ) )
 			PrescanGeneratorMojo mojo = new PrescanGeneratorMojo()
 			mojo.projectBuildDir = new File( getClass().getResource('/' ).getFile() )
 
@@ -40,8 +40,8 @@ class PrescanGeneratorMojoSpec extends Specification{
 			found.find { 'resource=jar:file:/jars/fragment.jar!/META-INF/resources/' == it }
 	}
 
-	private URL[] asURLArray( String... strings ) {
-		return strings.collect { getClass().getResource( it ).toURI().toURL() }.toArray()
+	private static URL[] asURLArray( List<String> strings ) {
+		return strings.collect { getClass().getResource( it ).toURI().toURL() }.toArray() as URL[]
 	}
 
 }
