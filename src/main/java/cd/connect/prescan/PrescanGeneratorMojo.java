@@ -68,12 +68,12 @@ public class PrescanGeneratorMojo extends AbstractMojo {
 			public List<ScanResource> resource( List<ScanResource> scanResources ) throws Exception {
 				for ( ScanResource scanResource : scanResources ) {
 					if ( scanResource.resourceName.endsWith( "WEB-INF/web.xml" ) ) {
-						found.add( "webxml=" + mapScanResource( scanResource ) );
+						found.add( "webxml=" + dereferenceResourcePath( scanResource ) );
 					} else if ( "META-INF/web-fragment.xml".equals( scanResource.resourceName ) ) {
-						found.add( "fragment=" + mapScanResource( scanResource ) );
+						found.add( "fragment=" + dereferenceResourcePath( scanResource ) );
 					} else if( scanResource.resourceName.startsWith( "META-INF/resources" ) ) {
 						if ( isDirectory( scanResource ) ) {
-							String path = mapScanResource( scanResource );
+							String path = dereferenceResourcePath( scanResource );
 							if( !path.endsWith( "/" ) ) {
 								path = path + "/";
 							}
@@ -115,16 +115,15 @@ public class PrescanGeneratorMojo extends AbstractMojo {
 	 * running inside mvn, our target path will end in /target so we adjust it so it
 	 * points at /target/classes where all our stuff will be...
 	 *
+	 * When processing a jar file. The URL is going to be something like
+	 *   jar:file:/home/user/.m2/repository/org/bob/servlet/2.4.1.Final/servlet-2.4.1.Final.jar!/META-INF/web-fragment.xml
+	 * however it needs to look something like
+	 *   jar:file:/lib/servlet-2.4.1.Final.jar!/META-INF/web-fragment.xml
+	 *
 	 */
-	private String mapScanResource( ResourceScanListener.ScanResource resource ){
+	private String dereferenceResourcePath( ResourceScanListener.ScanResource resource ){
 		String url = resource.getResolvedUrl().toString();
 		if( url.contains( "!" ) ){
-			// process jar file.
-			// The URL is going to be something like
-			//    jar:file:/home/user/.m2/repository/org/bob/servlet/2.4.1.Final/servlet-2.4.1.Final.jar!/META-INF/web-fragment.xml
-			// and it needs to look something like
-			//   fragment=jar:file:/lib/servlet-2.4.1.Final.jar!/META-INF/web-fragment.xml
-
 			String[] bits = url.split( "!" );
 			String prefix = bits[ 0 ].substring( 0, bits[ 0 ].indexOf( "/" ) + 1 );
 			String jarfile = bits[ 0 ].substring( bits[ 0 ].lastIndexOf( "/" ) );
