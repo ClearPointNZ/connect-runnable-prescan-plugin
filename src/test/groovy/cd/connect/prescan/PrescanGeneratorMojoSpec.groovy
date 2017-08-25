@@ -29,15 +29,16 @@ class PrescanGeneratorMojoSpec extends Specification{
 			ClassLoader loader = new URLClassLoader( asURLArray( [ '/jars/binks.jar', '/jars/fragment.jar' ] ) )
 			PrescanGeneratorMojo mojo = new PrescanGeneratorMojo()
 			mojo.projectBuildDir = new File( getClass().getResource('/' ).getFile() )
+			mojo.jarpath = "lib"
 
 		when: "we perform a scan"
 			List<String> found = mojo.scan( scanner, loader )
 
 		then: "we expect to find stuff"
 			found.size() == 3
-			found.find { 'webxml=jar:file:/jars/binks.jar!/WEB-INF/web.xml' == it }
-			found.find { 'fragment=jar:file:/jars/fragment.jar!/META-INF/web-fragment.xml' == it }
-			found.find { 'resource=jar:file:/jars/fragment.jar!/META-INF/resources/' == it }
+			found.find { 'webxml=jar:file:/lib/binks.jar!/WEB-INF/web.xml' == it }
+			found.find { 'fragment=jar:file:/lib/fragment.jar!/META-INF/web-fragment.xml' == it }
+			found.find { 'resource=jar:file:/lib/fragment.jar!/META-INF/resources/' == it }
 	}
 
 	private static URL[] asURLArray( List<String> strings ) {

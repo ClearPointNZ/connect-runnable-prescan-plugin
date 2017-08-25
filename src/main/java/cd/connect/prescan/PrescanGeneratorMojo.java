@@ -13,9 +13,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-@Mojo(name = "prescan-plugin",
+@Mojo(name = "prescan-config",
 	defaultPhase = LifecyclePhase.PROCESS_CLASSES,
 	configurator = "include-project-dependencies",
 	requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
@@ -29,6 +30,10 @@ public class PrescanGeneratorMojo extends AbstractMojo {
 
 	@Parameter(defaultValue = "${project.build.directory}")
 	File projectBuildDir;
+
+	@Parameter(defaultValue = "lib")
+	String jarpath;
+
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -51,8 +56,8 @@ public class PrescanGeneratorMojo extends AbstractMojo {
 					getLog().info( "No interesting web resources found?");
 				}
 			}
-		} catch (Exception ex) {
-			throw new MojoExecutionException(ex.getMessage(), ex);
+		} catch ( Exception ex ) {
+			throw new MojoExecutionException( ex.getMessage(), ex );
 		}
 	}
 
@@ -114,6 +119,19 @@ public class PrescanGeneratorMojo extends AbstractMojo {
 	 */
 	private String mapScanResource( ResourceScanListener.ScanResource resource ){
 		String url = resource.getResolvedUrl().toString();
+		if( url.contains( "!" ) ){
+			// process jar file.
+			// The URL is going to be something like
+			//    jar:file:/home/user/.m2/repository/org/bob/servlet/2.4.1.Final/servlet-2.4.1.Final.jar!/META-INF/web-fragment.xml
+			// and it needs to look something like
+			//   fragment=jar:file:/lib/servlet-2.4.1.Final.jar!/META-INF/web-fragment.xml
+
+			String[] bits = url.split( "!" );
+			String prefix = bits[ 0 ].substring( 0, bits[ 0 ].indexOf( "/" ) + 1 );
+			String jarfile = bits[ 0 ].substring( bits[ 0 ].lastIndexOf( "/" ) );
+			bits[ 0 ] = prefix + jarpath + jarfile;
+			url = String.join( "!", bits );
+		}
 		return url.replace( projectBuildPath(), "" );
 
 	}
