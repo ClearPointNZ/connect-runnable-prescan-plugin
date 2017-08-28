@@ -71,7 +71,7 @@ public class PrescanGeneratorMojo extends AbstractMojo {
 						found.add( "webxml=" + dereferenceResourcePath( scanResource ) );
 					} else if ( "META-INF/web-fragment.xml".equals( scanResource.resourceName ) ) {
 						found.add( "fragment=" + dereferenceResourcePath( scanResource ) );
-					} else if( scanResource.resourceName.startsWith( "META-INF/resources" ) ) {
+					} else if( scanResource.resourceName.equals( "META-INF/resources" ) ) {
 						if ( isDirectory( scanResource ) ) {
 							String path = dereferenceResourcePath( scanResource );
 							if( !path.endsWith( "/" ) ) {
@@ -129,6 +129,8 @@ public class PrescanGeneratorMojo extends AbstractMojo {
 			String jarfile = bits[ 0 ].substring( bits[ 0 ].lastIndexOf( "/" ) );
 			bits[ 0 ] = prefix + jarpath + jarfile;
 			url = String.join( "!", bits );
+		} else {
+			url = "jar:" + url;
 		}
 		return url.replace( projectBuildPath(), "" );
 
