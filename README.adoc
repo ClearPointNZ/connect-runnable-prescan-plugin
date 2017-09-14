@@ -1,1 +1,23 @@
-# prescan-plugin
+image::https://clearpointnz.github.io/connect/images/connect-logo.png[]
+by link:https://clearpoint.co.nz[ClearPoint]
+
+= Description
+This is a pre-scan plugin
+
+== Installation Instructions
+How to install
+
+'''
+
+= Connect
+Connect is a Continuous Delivery Platform from link:http://clearpoint.co.nz[ClearPoint]  
+
+Connect gathers our best practice approaches to deploying working software into the cloud with confidence.
+
+The main Connect repository is link:https://github.com/ClearPointNZ/connect[here]
+
+== Documentation
+The main documentation for Connect can be found here: link:http://docs.connect.cd[docs.connect.cd]
+
+== Help
+Any queries on the Connect platform can be sent to us link:here[connect@clearpoint.co.nz]
