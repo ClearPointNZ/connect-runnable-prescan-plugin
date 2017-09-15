@@ -5,7 +5,7 @@ by link:https://clearpoint.co.nz[ClearPoint]
 This is a pre-scan plugin
 
 == Installation Instructions
-How to install
+`mvn clean install`
 
 '''
 
