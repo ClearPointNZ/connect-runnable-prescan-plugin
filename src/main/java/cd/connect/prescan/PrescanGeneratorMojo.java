@@ -71,15 +71,17 @@ public class PrescanGeneratorMojo extends AbstractMojo {
 						found.add( "webxml=" + dereferenceResourcePath( scanResource ) );
 					} else if ( "META-INF/web-fragment.xml".equals( scanResource.resourceName ) ) {
 						found.add( "fragment=" + dereferenceResourcePath( scanResource ) );
-					} else if( scanResource.resourceName.equals( "META-INF/resources" ) ) {
-						if ( isDirectory( scanResource ) ) {
-							String path = dereferenceResourcePath( scanResource );
-							if( !path.endsWith( "/" ) ) {
-								path = path + "/";
-							}
-							found.add( "resource=" + path );
+					} else if( scanResource.resourceName.equals( "META-INF/resources/" ) && isDirectory(scanResource) ) {
+						String path = dereferenceResourcePath( scanResource );
+						if( !path.endsWith( "/" ) ) {
+							path = path + "/";
 						}
+
+						found.add( "resource=" + path );
 					}
+//					else if (scanResource.resourceName.contains("META-INF/resources")) {
+//						System.out.printf("found %s\n", scanResource.resourceName);
+//					}
 				}
 				return null; // nothing was interesting :-)
 			}
