@@ -6,6 +6,7 @@
 	<artifactId>connect-prescan-plugin</artifactId>
 	<version>1.1-SNAPSHOT</version>
 	<packaging>maven-plugin</packaging>
+	<name>connect-prescan-plugin</name>
 
 	<url>https://clearpointnz.github.io/connect/</url>
 	<developers>
@@ -35,6 +36,13 @@
 		file contains paths to resources, web-fragment.xml and web.xml files. This is used by the WebRunner
 		to speed up start up of web applications.
 	</description>
+
+	<scm>
+		<connection>scm:git:git@github.com:clearpointnz/connectprescan-plugin.git</connection>
+		<developerConnection>scm:git:git@github.com:clearpointnz/connectprescan-plugin.git</developerConnection>
+		<url>git@github.com:clearpointnz/connectprescan-plugin.git</url>
+		<tag>HEAD</tag>
+	</scm>
 
 	<properties>
 		<maven.version>3.3.9</maven.version>
@@ -96,43 +104,6 @@
 		</dependency>
 
 	</dependencies>
-
-	<profiles>
-		<profile>
-			<!-- adtivate the sonatype profile when a release is being done -->
-			<id>sonatype</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-deploy-plugin</artifactId>
-						<configuration>
-							<skip>true</skip>
-						</configuration>
-					</plugin>
-					<plugin>
-						<groupId>org.sonatype.plugins</groupId>
-						<artifactId>nexus-staging-maven-plugin</artifactId>
-						<version>1.6.7</version>
-						<executions>
-							<execution>
-								<id>deploy</id>
-								<goals>
-									<goal>deploy</goal>
-								</goals>
-								<phase>deploy</phase>
-							</execution>
-						</executions>
-						<configuration>
-							<serverId>sonatype-staging</serverId>
-							<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-							<autoReleaseAfterClose>true</autoReleaseAfterClose>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
 
 	<build>
 		<plugins>
