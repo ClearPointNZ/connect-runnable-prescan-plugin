@@ -4,7 +4,7 @@
 
 	<groupId>cd.connect.plugins</groupId>
 	<artifactId>connect-prescan-plugin</artifactId>
-	<version>1.1-SNAPSHOT</version>
+	<version>1.1</version>
 	<packaging>maven-plugin</packaging>
 	<name>connect-prescan-plugin</name>
 
@@ -41,7 +41,7 @@
 		<connection>scm:git:git@github.com:clearpointnz/connectprescan-plugin.git</connection>
 		<developerConnection>scm:git:git@github.com:clearpointnz/connectprescan-plugin.git</developerConnection>
 		<url>git@github.com:clearpointnz/connectprescan-plugin.git</url>
-		<tag>HEAD</tag>
+		<tag>connect-prescan-plugin-1.1</tag>
 	</scm>
 
 	<properties>
