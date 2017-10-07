@@ -13,7 +13,13 @@
 			<email>karl.leaning@objectivity.co.nz</email>
 			<id>kleaning</id>
 			<name>Karl Leaning</name>
-			<organization>on behalf of ClearPoint NZ Ltd</organization>
+			<organization>on behalf of Connect</organization>
+		</developer>
+		<developer>
+			<email>richard@bluetrainsoftware.com</email>
+			<id>rvowles</id>
+			<name>Richard Vowles</name>
+			<organization>on behalf of Connect</organization>
 		</developer>
 	</developers>
 
@@ -41,13 +47,13 @@
 			<artifactId>maven-artifact</artifactId>
 			<version>${maven.version}</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.apache.maven</groupId>
 			<artifactId>maven-plugin-api</artifactId>
 			<version>${maven.version}</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.apache.maven</groupId>
 			<artifactId>maven-project</artifactId>
@@ -91,11 +97,56 @@
 
 	</dependencies>
 
+	<profiles>
+		<profile>
+			<!-- adtivate the sonatype profile when a release is being done -->
+			<id>sonatype</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-deploy-plugin</artifactId>
+						<configuration>
+							<skip>true</skip>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.sonatype.plugins</groupId>
+						<artifactId>nexus-staging-maven-plugin</artifactId>
+						<version>1.6.7</version>
+						<executions>
+							<execution>
+								<id>deploy</id>
+								<goals>
+									<goal>deploy</goal>
+								</goals>
+								<phase>deploy</phase>
+							</execution>
+						</executions>
+						<configuration>
+							<serverId>sonatype-staging</serverId>
+							<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+							<autoReleaseAfterClose>true</autoReleaseAfterClose>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 	<build>
 		<plugins>
 			<plugin>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.19.1</version>
+				<groupId>io.repaint.maven</groupId>
+				<artifactId>tiles-maven-plugin</artifactId>
+				<version>2.10</version>
+				<extensions>true</extensions>
+				<configuration>
+					<filtering>false</filtering>
+					<tiles>
+						<tile>cd.connect.tiles:tile-java:[1.2, 2)</tile>
+					</tiles>
+				</configuration>
 			</plugin>
 
 			<plugin>
@@ -127,83 +178,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.5.1</version>
-				<configuration>
-					<!--<compilerVersion>1.8</compilerVersion>-->
-					<source>1.8</source>
-					<target>1.8</target>
-					<useIncrementalCompilation>false</useIncrementalCompilation>
-				</configuration>
-			</plugin>
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.10.3</version>
-				<executions>
-					<execution>
-						<id>attach-javadocs</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<doclet>org.asciidoctor.Asciidoclet</doclet>
-					<docletArtifact>
-						<groupId>org.asciidoctor</groupId>
-						<artifactId>asciidoclet</artifactId>
-						<version>1.5.4</version>
-					</docletArtifact>
-				</configuration>
-			</plugin>
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<version>2.10</version>
-				<executions>
-					<execution>
-						<id>analyze-deps</id>
-						<goals>
-							<goal>analyze-only</goal>
-						</goals>
-						<configuration>
-							<failOnWarning>${dependency.check.fastfail}</failOnWarning>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-
-			<plugin>
-				<artifactId>maven-source-plugin</artifactId>
-				<version>2.3</version>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<phase>package</phase>
-						<goals>
-							<goal>jar-no-fork</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-
-			<plugin>
-				<groupId>io.repaint.maven</groupId>
-				<artifactId>tiles-maven-plugin</artifactId>
-				<version>2.10</version>
-				<extensions>true</extensions>
-				<configuration>
-					<filtering>false</filtering>
-					<tiles>
-						<tile>cd.connect.tiles:tile-release:[1.1, 2)</tile>
-					</tiles>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>
